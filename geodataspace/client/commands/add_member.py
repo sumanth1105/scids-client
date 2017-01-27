@@ -17,8 +17,8 @@ def cmd_count_files(process):
             print "   > ", member_name," with id ", member_id
     return cnt_files
 
-def parse_cmd_add_member(cmd_splitted, geounit_id, db):
-    if not is_geounit_selected(geounit_id): return
+def parse_cmd_add_member(cmd_splitted, active_geounit, db):
+    if not is_geounit_selected(active_geounit): return
 
     cmd_2 = cmd_splitted.get(1, "")
     if cmd_2 == "":
@@ -27,6 +27,7 @@ def parse_cmd_add_member(cmd_splitted, geounit_id, db):
     # add file as a member
     elif os.path.isfile(cmd_2):
         print "Adding file as a member of this geounit: " + cmd_2
+        active_geounit.add_file(cmd_2);
         pass
 
     # add members from folder
@@ -40,9 +41,10 @@ def parse_cmd_add_member(cmd_splitted, geounit_id, db):
                 members_list.append(dict(data_type="file", data_uri=os.path.join(dirname, filename)))
 
         print "Adding: ", str(members_list)
+        active_geounit.add_directory(cmd_2);
         pass
 
     # add_member something
     else:
-        print "cannot find file or folder with name " + cmd_2
+        print "cannot find file or folder with name: " + cmd_2
 

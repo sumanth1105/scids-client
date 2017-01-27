@@ -10,6 +10,7 @@ class GeoUnit:
     repo = None
     repo_name = UNDEFINED
     repo_path = UNDEFINED
+    user_name = UNDEFINED
 
     def __init__(self, user_name, geounit_name, db):
         if (geounit_name == UNDEFINED):
@@ -29,6 +30,7 @@ class GeoUnit:
             self.repo = Gittle.init(repo_path)
             self.repo_name = geounit_name
             self.repo_path = repo_path
+            self.user_name = user_name
             db.Put(geounit_name, repo_path)
             print "New geounit is created at: %s" %self.repo_path
         else:
@@ -52,3 +54,24 @@ class GeoUnit:
         self.repo = None
         self.repo_name = UNDEFINED
         self.repo_path = UNDEFINED
+        self.user_name = UNDEFINED
+
+    def add_file(self, file_name):
+        print "adding file: %s" %file_name
+        pass
+
+    def add_directory(self, dir_name):
+        print "adding directory: %s" %dir_name
+        pass
+
+    def is_member_present(self, member):
+        print "checking whether %s is present or not." %member
+        return True
+
+    def add_annotation(self, prop, value):
+        print "adding annotation: %s" %prop
+        pass
+
+    def add_annotation_to_member(self, member, prop, value):
+        print "adding annotation to member: %s" %member
+        pass
