@@ -15,6 +15,7 @@ setup(name="gdsclient",
                 "geodataspace.client.util",
                 "geodataspace.client.tests"],
       package_data={},
+      scripts=["geodataspace/client/gdsclient.py"],
       keywords=["geodataspace","globusonline"],
       classifiers=[
           "Development Status :: 3 - Alpha",

@@ -1,30 +1,44 @@
 from geodataspace.client.util.dataUtils import UNDEFINED
+from geodataspace.client.catalog.geounit import GeoUnit
 
 #######################################
 #   Parse geounit command
-#   returns  (geounit_name, geounit_id, err_message)
+#   returns  (active_geounit, geounit_name, err_message)
 #######################################
-def parse_cmd_geounit(cmd_splitted, geounit_id, db):
+def parse_cmd_geounit(cmd_splitted, user_name, geounit_name, active_geounit, db):
     cmd_2 = cmd_splitted.get(1, "")
     if cmd_2 == "start":
-        geounit_name = cmd_splitted.get(2, UNDEFINED)
-        if geounit_name != UNDEFINED:
-            return geounit_name, geounit_id, ""
+        new_geounit_name = cmd_splitted.get(2, UNDEFINED)
+        if (new_geounit_name == UNDEFINED and new_geounit_name == geounit_name):
+            return active_geounit, geounit_name, ""
+
+        if (active_geounit != None):
+            active_geounit.stop(user_name, geounit_name, db)
+
+        geounit_name = new_geounit_name
+        active_geounit = GeoUnit(user_name, geounit_name, db)
+
+        if active_geounit is None:
+            return None, UNDEFINED, "cannot create geounit object"
         else:
-            return UNDEFINED, None, "cannot understand geounit name"
+            return active_geounit, geounit_name, ""
 
     elif cmd_2 == "stop":
-        pass
-        #if geounit_id is None:
-        #    return None, None, "cannot use geounit name"
+        if active_geounit is None:
+            return None, UNDEFINED, "cannot stop: No active geounit"
+
+        active_geounit.stop(user_name, geounit_name, db)
+        return None, UNDEFINED, ""
 
     elif cmd_2 == "delete":
-        pass
-        #if geounit_id is None:
-        #    return None, None, "cannot use geounit name"
+        if active_geounit is None:
+            return None, UNDEFINED, "cannot delete: No active geounit"
+
+        active_geounit.delete(user_name, geounit_name, db)
+        return None, UNDEFINED, ""
 
     else:
         # geounit something
-        return UNDEFINED, None, "usage: geounit [start|stop|delete] <geounit name>"
+        return None, UNDEFINED, "usage: geounit [start|stop|delete] <geounit name>"
 
-    return UNDEFINED, None, ""
+    return None, UNDEFINED, ""

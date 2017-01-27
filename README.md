@@ -1,4 +1,4 @@
-gds-client is a python library for accessing provenance data and interacting with GeoDataspace server. 
+scids-client is a python library for accessing provenance data and interacting with GeoDataspace server. 
 
 Pre-requirements:
 * git   
@@ -11,12 +11,12 @@ Pre-requirements:
 
 sudo chmod o+rwx /var/run/docker.sock
 
-git clone https://<username>@bitbucket.org/scidataspace/gdsclient2.0.git
+git clone https://<username>@github.com/sumanth1105/scids-client.git
 
 Install:
 Use the setup.py script to install this library:
 
-cd gdsclient2.0
+cd scids-client
 sudo python setup.py install
 
 The library can also be installed as a normal user in a virtualenv, or using the --user option to install.
