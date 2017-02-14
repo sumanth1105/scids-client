@@ -2,42 +2,36 @@ __author__ = 'sumanth'
 
 import os, sys
 
-import code
-import logging
 import readline
-import requests
 import atexit
 
-import configparser
-
-from leveldb import LevelDB, LevelDBError
-
-from geodataspace.client.catalog.gdsconfig import GDSConfig
+from geodataspace.client.datastore.geodatamanager import GeoDataManager
 
 from geodataspace.client.completer import BufferAwareCompleter
-from geodataspace.client.util.dataUtils import UNDEFINED, SafeList
-from geodataspace.client.util.runUtils import run_command, is_geounit_selected
+from geodataspace.client.util.data_utils import UNDEFINED, SafeList
+from geodataspace.client.util.run_utils import run_command
 
-from geodataspace.client.commands.geounit import parse_cmd_geounit
 from geodataspace.client.commands.annotate import parse_cmd_annotate
-from geodataspace.client.commands.add_member import parse_cmd_add_member
+from geodataspace.client.commands.geounit import parse_cmd_geounit
+from geodataspace.client.commands.member import parse_cmd_member
+from geodataspace.client.commands.package import parse_cmd_package
+from geodataspace.client.commands.track import parse_cmd_track
+from geodataspace.client.commands.transfer import parse_cmd_transfer
+
 
 import warnings
 warnings.filterwarnings("ignore")
 
 if __name__ == '__main__':
-    gdsclientdir = os.path.join(os.path.expanduser("~"), ".gdsclient")
-    if not os.path.exists(gdsclientdir):
-        os.makedirs(gdsclientdir)
+    gdsclient_dir = os.path.join(os.path.expanduser("~"), ".gdsclient")
+    if not os.path.exists(gdsclient_dir):
+        os.makedirs(gdsclient_dir)
 
-    # Read config file
-    cfg = GDSConfig()
-    user_name = cfg.get_cfg_field('uname', 'GeoDataspace')
+    #create geodatamanager object that manages all geounits locally
+    geodatamanager = GeoDataManager(gdsclient_dir)
 
-    ## check if the LevelDB local database and history file exists; if not create it;	
-    ## if exists, reuse the LevelDB local database
-    levelDB_file = os.path.join(gdsclientdir, ".gds_levelDB")
-    history_file = os.path.join(gdsclientdir, ".gds_history")
+    #read history from last run
+    history_file = geodatamanager.history_file
     try:
         readline.read_history_file(history_file)
     except IOError:
@@ -45,37 +39,13 @@ if __name__ == '__main__':
     atexit.register(readline.write_history_file, history_file)
     del history_file
 
-    db = LevelDB(levelDB_file, create_if_missing=True)
-    if db == None:
-        print("cannot open data from db file: " + levelDB_file)
-        exit(1)
+    #display the suggestions for command auto-completion on pressing the tab button
+    cmd_suggestions = geodatamanager.completer_suggestions
 
-    print "enter --stop to end session"
-
-    completer_suggestions = {
-        'geounit':{'start':{}, 'stop':{}, 'delete':{}},
-        'add_member':{},
-        'track':{},
-        'transfer':{},
-        'package':{'provenance':
-                         {'level':{'individual':{}, 'collaboration':{}, 'community':{}}
-                          },
-                     'level':{'individual':{}, 'collaboration':{}, 'community':{}},
-                     'list':{},
-                     'add':{},
-                     'delete':{},
-                     },
-        'annotate':{'geounit':
-                         {'geoprop1':{}, 'prop2':{}, 'fluid':{}
-                          },
-                     'member':{}
-                     },
-        'stop':{}
-    }
-
-    gds_client_special_string = '--'
-    print ("All gdsclient commands start with  " + gds_client_special_string)
-    comp = BufferAwareCompleter(completer_suggestions, gds_client_special_string)
+    cmd_prefix = '--'
+    print ("All gdsclient commands start with  " + cmd_prefix)
+    comp = BufferAwareCompleter(cmd_suggestions, cmd_prefix)
+    print "Enter --stop to end session"
 
     readline.set_completer_delims(' \t\n')
     if 'libedit' in readline.__doc__:
@@ -85,6 +55,7 @@ if __name__ == '__main__':
     readline.set_completer(comp.complete)
 
     active_geounit = None
+    docker_image_id = UNDEFINED
     geounit_name = UNDEFINED
 
     while True :
@@ -97,12 +68,25 @@ if __name__ == '__main__':
             break
 
         elif first_command == "--geounit":
-            active_geounit, geounit_name, err_message = parse_cmd_geounit(cmd_splitted, user_name, geounit_name, active_geounit, db)
-            if err_message != "":
-                print err_message
+            active_geounit = parse_cmd_geounit(cmd_splitted, active_geounit, geodatamanager)
+            if active_geounit != None:
+                geounit_name = active_geounit.name
+            else:
+                geounit_name = UNDEFINED
 
-        elif first_command in ["--annotate", "--add_member"]:
-            locals()["parse_cmd_"+first_command[2:]](cmd_splitted, active_geounit, db)
+        elif first_command == "--package":
+            new_image_id = parse_cmd_package(cmd_splitted, active_geounit, geodatamanager)
+            if new_image_id:
+                docker_image_id = new_image_id
+
+        elif first_command in ["--annotate", "--member", "--track"]:
+            locals()["parse_cmd_"+first_command[2:]](cmd_splitted, active_geounit)
+
+        elif first_command == "--test":
+            parse_cmd_transfer(cmd_splitted, docker_image_id, active_geounit)
+
+        elif first_command == "--transfer":
+            parse_cmd_transfer(cmd_splitted, docker_image_id, active_geounit, geodatamanager)
 
         elif first_command == "cd":
             try:

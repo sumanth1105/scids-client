@@ -1,44 +1,48 @@
-from geodataspace.client.util.dataUtils import UNDEFINED
-from geodataspace.client.catalog.geounit import GeoUnit
+from geodataspace.client.util.data_utils import UNDEFINED
+from geodataspace.client.datastore.geounit import GeoUnit
 
 #######################################
 #   Parse geounit command
-#   returns  (active_geounit, geounit_name, err_message)
+#   returns active_geounit object
 #######################################
-def parse_cmd_geounit(cmd_splitted, user_name, geounit_name, active_geounit, db):
+def parse_cmd_geounit(cmd_splitted, active_geounit, geodatamanager):
     cmd_2 = cmd_splitted.get(1, "")
     if cmd_2 == "start":
         new_geounit_name = cmd_splitted.get(2, UNDEFINED)
-        if (new_geounit_name == UNDEFINED and new_geounit_name == geounit_name):
-            return active_geounit, geounit_name, ""
+        if (new_geounit_name == UNDEFINED):
+            return active_geounit
 
         if (active_geounit != None):
-            active_geounit.stop(user_name, geounit_name, db)
+            active_geounit.stop()
 
-        geounit_name = new_geounit_name
-        active_geounit = GeoUnit(user_name, geounit_name, db)
+        active_geounit = GeoUnit(new_geounit_name, geodatamanager)
 
         if active_geounit is None:
-            return None, UNDEFINED, "cannot create geounit object"
+            print "cannot create geounit object"
         else:
-            return active_geounit, geounit_name, ""
+            return active_geounit
 
     elif cmd_2 == "stop":
         if active_geounit is None:
-            return None, UNDEFINED, "cannot stop: No active geounit"
-
-        active_geounit.stop(user_name, geounit_name, db)
-        return None, UNDEFINED, ""
+            print "cannot stop: No active geounit"
+            return None
+        active_geounit.stop()
+        return None
 
     elif cmd_2 == "delete":
         if active_geounit is None:
-            return None, UNDEFINED, "cannot delete: No active geounit"
+            print "cannot delete: No active geounit"
+            return None
+        geodatamanager.delete_geounit(active_geounit.name)
+        active_geounit.delete()
+        return None
 
-        active_geounit.delete(user_name, geounit_name, db)
-        return None, UNDEFINED, ""
+    elif cmd_2 == "list":
+        geounits = geodatamanager.get_all_local_geounits()
+        print '\n'.join(geounits)
+        return active_geounit
 
     else:
         # geounit something
-        return None, UNDEFINED, "usage: geounit [start|stop|delete] <geounit name>"
-
-    return None, UNDEFINED, ""
+        print "usage: geounit start <geounit name> (OR) geounit [stop|delete|list] "
+        return None

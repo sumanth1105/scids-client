@@ -13,8 +13,8 @@ class GDSConfig:
     ## Next time the client is run, read username from config.ini
     ## If Globus token is none, Obtain Globus token and store it, else proceed
     ## Return config
-    def __init__(self):
-        self.config_file_name = os.path.join(os.path.expanduser("~"),'.gdsclient','config.ini')
+    def __init__(self, gdsclient_dir):
+        self.config_file_name = os.path.join(gdsclient_dir,'config.ini')
         #print "config file path: %s" %self.config_file_name
         self.config = configparser.ConfigParser()
         try:
@@ -26,8 +26,7 @@ class GDSConfig:
             self.config['GeoDataspace'] = {'uname' : 'tanum'}
             self.config['Globus'] = {
                 'globus-uname': 'tanum',
-                'globus-catalog': 11,
-                'globus-local-endpoint': 'tanum#client153',
+                'globus-datastore': 11,
                 'globus-local-endpoint': 'tanum#client153',
                 'globus-remote-endpoint': 'tanum#geodataserver',
                 'globus-local-folder': '/home/ubuntu/.gdclient/docker_images',
@@ -74,18 +73,18 @@ class GDSConfig:
                 print "There was an error in obtaining Globus token. Please check username or your password"
                 sys.stderr.write(str(e) + "\n")
 
-        catalog_id = self.get_cfg_field('catalog',namespace='GeoDataspace')
+        catalog_id = self.get_cfg_field('datastore',namespace='GeoDataspace')
         if  catalog_id == "None":
             nr_tries = 0
             while (nr_tries<3 and catalog_id == "None"):
-                catalog_name = raw_input("Please provide catalog name > ")
+                catalog_name = raw_input("Please provide datastore name > ")
                 # Show the data to user and get catalog_name from user
                 catalog_json = get_catalog_by_name(datasetClient,catalog_name)
                 if catalog_json is not None:
                     catalog_id = str(catalog_json.get('id',None))
-                    self.config['GeoDataspace']['catalog'] = catalog_id
+                    self.config['GeoDataspace']['datastore'] = catalog_id
                 else:
-                    print "Could not find catalog with name containing '%s'"%catalog_name
+                    print "Could not find datastore with name containing '%s'"%catalog_name
                 nr_tries += 1
 
             self.write_cfg_file()

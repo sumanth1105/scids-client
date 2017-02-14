@@ -1,5 +1,5 @@
 import os, sys
-from geodataspace.client.catalog.gdsconfig import GDSConfig
+from geodataspace.client.datastore.gdsconfig import GDSConfig
 
 def test_config_file():
 	config = GDSConfig();

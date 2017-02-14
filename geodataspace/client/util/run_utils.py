@@ -29,6 +29,6 @@ def run_command(args, processing_function=cmd_print_output):
 
 def is_geounit_selected(geounit):
     if geounit is None:
-        print "please select geounit"
+        print "please select a geounit"
         return False
-    return True
+    return geounit.is_active
